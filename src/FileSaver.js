@@ -36,6 +36,10 @@ function download (url, name, opts) {
   xhr.open('GET', url)
   xhr.responseType = 'blob'
   xhr.onload = function () {
+   var matches =  /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(xhr.getResponseHeader('Content-Disposition'))
+    if (matches != null && matches[1]) { 
+      name = name || matches[1].replace(/['"]/g, '')
+    }
     saveAs(xhr.response, name, opts)
   }
   xhr.onerror = function () {
@@ -46,8 +50,8 @@ function download (url, name, opts) {
 
 function corsEnabled (url) {
   var xhr = new XMLHttpRequest()
-  // use sync to avoid popup blocker
-  xhr.open('HEAD', url, false)
+// Asynchronous request may be blocked by some popup blockers 
+ xhr.open('HEAD', url)
   try {
     xhr.send()
   } catch (e) {}
@@ -80,7 +84,8 @@ var saveAs = _global.saveAs || (
   : ('download' in HTMLAnchorElement.prototype && !isMacOSWebView)
   ? function saveAs (blob, name, opts) {
     var URL = _global.URL || _global.webkitURL
-    var a = document.createElement('a')
+
+     var a = document.createElementNS('http://www.w3.org/1999/xhtml', 'a') 
     name = name || blob.name || 'download'
 
     a.download = name
@@ -169,3 +174,5 @@ _global.saveAs = saveAs.saveAs = saveAs
 if (typeof module !== 'undefined') {
   module.exports = saveAs;
 }
+
+export { saveAs }
